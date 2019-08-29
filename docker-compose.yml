@@ -1,0 +1,95 @@
+version: "3"
+
+services:
+  wordpress:
+    image: "wordpress:${WP_VERSION:-5.2.1}-php${PHP_VERSION:-7.3}-apache"
+    environment:
+      HTTPS_METHOD: "nohttps"
+      VIRTUAL_HOST: "${DOCKER_DEV_DOMAIN}"
+      WORDPRESS_DB_HOST: "mysql"
+      WORDPRESS_DB_NAME: "wordpress"
+      WORDPRESS_DB_PASSWORD: ""
+      WORDPRESS_DB_USER: "root"
+      WORDPRESS_SITE_URL: "http://${DOCKER_DEV_DOMAIN}"
+      XDEBUG_CONFIG: "remote_host=${DOCKER_LOCAL_IP} idekey=xdebug"
+    depends_on:
+      - "mysql"
+      - "phpmyadmin"
+    networks:
+      - "front"
+      - "back"
+    volumes:
+      - "wp:/var/www/html:rw"
+      - "./bin/install-wp.sh:/var/www/html/install-wp.sh:rw"
+      - "./bin/.htaccess:/var/www/html/.htaccess:ro"
+      - "./certs/ca-root/ca.crt:/tmp/certs/root.crt:ro"
+      - "./conf/php-local.ini:/usr/local/etc/php/conf.d/local.ini:ro"
+      - "./conf/wp-local-config.php:/usr/local/etc/php/autoprepend.php:ro"
+      - "./src/nu-sun-web-wp-cms:/var/www/html/wp-content:rw"
+      - "./.ssh:/.ssh:ro"
+  wp-cli:
+    image: "wordpress:cli-${WP_CLI_VERSION:-2.2.0}-php${PHP_VERSION:-7.3}"
+    environment:
+      - APACHE_RUN_USER="www-data"
+      - APACHE_RUN_GROUP="www-data"
+    depends_on:
+      - "mysql"
+    networks:
+      - "back"
+    volumes:
+      - "wp:/var/www/html:rw"
+      - "./bin/.htaccess:/var/www/html/.htaccess:ro"
+      - "./bin/install-wp.sh:/var/www/html/install-wp.sh:rw"
+      - "./conf/php-local.ini:/usr/local/etc/php/conf.d/local.ini:ro"
+      - "./conf/wp-local-config.php:/usr/local/etc/php/autoprepend.php:ro"
+      - "./src/nu-sun-web-wp-cms:/var/www/html/wp-content:rw"
+      - "./.ssh:/.ssh:ro"
+  photon:
+    image: "chriszarate/photon:latest"
+    networks:
+      - "front"
+  mysql:
+    image: "mariadb:10.2"
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: "wordpress"
+      MYSQL_ROOT_PASSWORD: ""
+    networks:
+      - "back"
+  phpmyadmin:
+    depends_on:
+      - "mysql"
+    image: "phpmyadmin/phpmyadmin:edge"
+    restart: "always"
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: "mysql"
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_USERNAME: "wp"
+    networks:
+      - "front"
+      - "back"
+  proxy:
+    image: "jwilder/nginx-proxy:alpine"
+    environment:
+      HSTS: "off"
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      front:
+        aliases:
+          - "${DOCKER_DEV_DOMAIN}"
+    volumes:
+      - "/var/run/docker.sock:/tmp/docker.sock:ro"
+      - "./certs/self-signed:/etc/nginx/certs:ro"
+      - "./conf/nginx-proxy.conf:/etc/nginx/conf.d/proxy.conf:ro"
+      - "./conf/nginx-proxy-wordpress.conf:/etc/nginx/vhost.d/${DOCKER_DEV_DOMAIN}_location:ro"
+
+networks:
+  front: {}
+  back: {}
+
+volumes:
+  wp: {}
