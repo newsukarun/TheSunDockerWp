@@ -34,3 +34,6 @@ Sit back and relax, when ever terminal ask you to type [y|n] type Y.
 * * Url: `thesun.local:8081/`
 * * Username : `root`
 * * Password: `<empty>`
+
+### Ssh :
+* To use Ssh: `docker exec -it thesun_local_wordpress_1 /bin/bash`
