@@ -135,6 +135,8 @@ wp site create --slug=talksport --allow-root
 cd wp-content/
 
 npm install
+grunt local
+grunt build
 
 git reset --hard
 git clean -df -f
