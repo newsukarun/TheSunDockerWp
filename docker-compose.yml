@@ -26,7 +26,7 @@ services:
       - "./conf/php-local.ini:/usr/local/etc/php/conf.d/local.ini:ro"
       - "./conf/wp-local-config.php:/usr/local/etc/php/autoprepend.php:ro"
       - "./src/nu-sun-web-wp-cms:/var/www/html/wp-content:rw"
-      - "./.ssh:/.ssh:ro"
+      - "./ssh:/.ssh:ro"
   wp-cli:
     image: "wordpress:cli-${WP_CLI_VERSION:-2.2.0}-php${PHP_VERSION:-7.3}"
     environment:

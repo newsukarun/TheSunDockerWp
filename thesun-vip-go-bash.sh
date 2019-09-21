@@ -72,7 +72,7 @@ rm -rf ./bin/.htaccess
 cp ${CWD}/.htaccess ./bin/.htaccess
 
 # Copy global dir.
-cp -R ${UGD}/.ssh ./.ssh
+cp -R ${UGD}/.ssh ./ssh
 
 rm -rf ${CWD}/install-wp.sh
 touch ${CWD}/install-wp.sh
@@ -101,7 +101,6 @@ npm install -g runy
 apt-get install ruby-full build-essential rubygems && gem install sass && ruby --version
 
 # Install grunt ( Just because if any error, first i will remove and then add latest npm)
-which grunt
 npm install -g grunt-cli
 
 # Install Composer
@@ -137,11 +136,6 @@ cd wp-content/
 
 npm install
 
-# Setting Up Pre commit hooks.
-git clone git@github.com:xwp/wp-dev-lib.git ~/wp-dev-lib
-~/wp-dev-lib/install-pre-commit-hook.sh .
-echo 'DEV_LIB_SKIP=phpunit' > .dev-lib
-
 git reset --hard
 git clean -df -f
 
@@ -162,7 +156,7 @@ docker exec -it thesun_local_wordpress_1 chmod +x ./install-wp.sh
 docker exec -it thesun_local_wordpress_1 ./install-wp.sh
 
 docker-compose -f docker-compose.yml -f docker-compose.phpunit.yml up -d
-docker-compose -f docker-compose.phpunit.yml run --rm wordpress_phpunit /app/bin/install-wp-tests.sh wordpress_test root '' mysql_phpunit latest true
+docker-compose -f docker-compose.phpunit.yml run --rm wordpress_phpunit ./install-wp-tests.sh wordpress_test root '' mysql_phpunit latest true
 docker-compose -f docker-compose.phpunit.yml run --rm wordpress_phpunit phpunit
 
 echo "Log in to http://${DOCKER_DEV_DOMAIN}/wp-admin/ with ${WP_ADMIN_USER} / ${WP_ADMIN_PASSWORD}."
