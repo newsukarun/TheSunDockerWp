@@ -125,12 +125,29 @@ wp core multisite-install --title=\"${WP_INSTALL_SITE_TITLE}\" --admin_user=\"${
 wp option update permalink_structure \"/%year%/%monthnum%/%day%/%postname%/\" --skip-themes --skip-plugins --allow-root
 wp term create category Sport --description=Sport --allow-root
 wp term create category Football --description=Sport --allow-root
-wp theme activate thesun --allow-root
+
+# Network Enable theme
+wp theme enable thesun
+wp theme enable thesuncom
+wp theme enable scottishsun
+wp theme enable irishsun
+wp theme enable dreamteam
+wp theme enable talksport
+
+# Network Create sites
 wp site create --slug=thesuncom --allow-root
 wp site create --slug=scottishsun --allow-root
 wp site create --slug=irishsun --allow-root
 wp site create --slug=dreamteam --allow-root
 wp site create --slug=talksport --allow-root
+
+# Enable theme site wide.
+wp theme activate thesun --allow-root --url=${DOCKER_DEV_DOMAIN}
+wp theme activate thesuncom --allow-root --url=${DOCKER_DEV_DOMAIN}/thesuncom
+wp theme activate scottishsun --allow-root --url=${DOCKER_DEV_DOMAIN}/scottishsun
+wp theme activate irishsun --allow-root --url=${DOCKER_DEV_DOMAIN}/irishsun
+wp theme activate dreamteam --allow-root --url=${DOCKER_DEV_DOMAIN}/dreamteam
+wp theme activate talksport --allow-root --url=${DOCKER_DEV_DOMAIN}/talksport
 
 cd wp-content/
 
