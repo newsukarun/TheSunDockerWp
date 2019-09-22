@@ -74,6 +74,9 @@ cp ${CWD}/.htaccess ./bin/.htaccess
 # Copy global dir.
 cp -R ${UGD}/.ssh ./ssh
 
+echo "Sleeping for 5 sec"
+sleep 5
+
 rm -rf ${CWD}/install-wp.sh
 touch ${CWD}/install-wp.sh
 source ./.env
@@ -169,7 +172,6 @@ echo ""
 echo "Done! You are ready to run \`docker-compose up -d\`."
 
 docker-compose up -d
-docker-compose -f docker-compose.yml -f docker-compose.phpunit.yml up -d
 docker exec -it thesun_local_wordpress_1 chmod +x /usr/local/bin/docker-entrypoint.sh
 docker exec -it thesun_local_wordpress_1 chmod +x ./install-wp.sh
 docker exec -it thesun_local_wordpress_1 ./install-wp.sh

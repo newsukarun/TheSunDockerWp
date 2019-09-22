@@ -43,7 +43,7 @@ services:
       - "./conf/php-local.ini:/usr/local/etc/php/conf.d/local.ini:ro"
       - "./conf/wp-local-config.php:/usr/local/etc/php/autoprepend.php:ro"
       - "./src/nu-sun-web-wp-cms:/var/www/html/wp-content:rw"
-      - "./.ssh:/.ssh:ro"
+      - "./ssh:/.ssh:ro"
   photon:
     image: "chriszarate/photon:latest"
     networks:
