@@ -34,7 +34,8 @@ mkdir -p src
 # Clone git repos.
 for repo in \
   newsuk/nu-sun-web-wp-cms \
-  tollmanz/wordpress-pecl-memcached-object-cache
+  tollmanz/wordpress-pecl-memcached-object-cache \
+  JulienBreux/phpunit-docker
 do
   dir_name="${repo##*/}"
 
@@ -71,7 +72,10 @@ rm -rf ./bin/.htaccess
 cp ${CWD}/.htaccess ./bin/.htaccess
 
 # Copy global dir.
-cp -R ${UGD}/.ssh ./.ssh
+cp -R ${UGD}/.ssh ./ssh
+
+echo "Sleeping for 5 sec"
+sleep 5
 
 rm -rf ${CWD}/install-wp.sh
 touch ${CWD}/install-wp.sh
@@ -100,7 +104,6 @@ npm install -g runy
 apt-get install ruby-full build-essential rubygems && gem install sass && ruby --version
 
 # Install grunt ( Just because if any error, first i will remove and then add latest npm)
-which grunt
 npm install -g grunt-cli
 
 # Install Composer
@@ -114,7 +117,10 @@ chmod +x wp-cli.phar
 mv wp-cli.phar /usr/local/bin/wp
 wp --info
 
-
+# Just Incase Phpunit container links then this will help
+curl -O https://phar.phpunit.de/phpunit-7.5.phar
+chmod +x phpunit-7.5.phar
+sudo mv phpunit-7.5.phar /usr/local/bin/phpunit
 
 # Install WordPress.
 wp core multisite-install --title=\"${WP_INSTALL_SITE_TITLE}\" --admin_user=\"${WP_ADMIN_USER}\" --admin_password=\"${WP_ADMIN_PASSWORD}\" --admin_email=\"${WP_ADMIN_EMAIL}\" --url=\"${DOCKER_DEV_DOMAIN}\" --skip-email --allow-root
@@ -122,20 +128,35 @@ wp core multisite-install --title=\"${WP_INSTALL_SITE_TITLE}\" --admin_user=\"${
 wp option update permalink_structure \"/%year%/%monthnum%/%day%/%postname%/\" --skip-themes --skip-plugins --allow-root
 wp term create category Sport --description=Sport --allow-root
 wp term create category Football --description=Sport --allow-root
+
+# Network Enable theme
+wp theme enable thesun
+wp theme enable thesuncom
+wp theme enable scottishsun
+wp theme enable irishsun
+wp theme enable dreamteam
+wp theme enable talksport
+
+# Network Create sites
 wp site create --slug=thesuncom --allow-root
 wp site create --slug=scottishsun --allow-root
 wp site create --slug=irishsun --allow-root
 wp site create --slug=dreamteam --allow-root
 wp site create --slug=talksport --allow-root
 
+# Enable theme site wide.
+wp theme activate thesun --allow-root --url=${DOCKER_DEV_DOMAIN}
+wp theme activate thesuncom --allow-root --url=${DOCKER_DEV_DOMAIN}/thesuncom
+wp theme activate scottishsun --allow-root --url=${DOCKER_DEV_DOMAIN}/scottishsun
+wp theme activate irishsun --allow-root --url=${DOCKER_DEV_DOMAIN}/irishsun
+wp theme activate dreamteam --allow-root --url=${DOCKER_DEV_DOMAIN}/dreamteam
+wp theme activate talksport --allow-root --url=${DOCKER_DEV_DOMAIN}/talksport
+
 cd wp-content/
 
 npm install
-
-# Setting Up Pre commit hooks.
-git clone git@github.com:xwp/wp-dev-lib.git ~/wp-dev-lib
-~/wp-dev-lib/install-pre-commit-hook.sh .
-echo 'DEV_LIB_SKIP=phpunit' > .dev-lib
+grunt local
+grunt build
 
 git reset --hard
 git clean -df -f
@@ -144,16 +165,20 @@ git clean -df -f
 
 rm -rf ./bin/install-wp.sh
 cp ${CWD}/install-wp.sh  ./bin/install-wp.sh
+cp ${CWD}/install-wp-tests.sh  ./bin/install-wp-tests.sh
 
 # Done!
 echo ""
 echo "Done! You are ready to run \`docker-compose up -d\`."
 
 docker-compose up -d
-docker-compose -f docker-compose.yml -f docker-compose.phpunit.yml up -d
 docker exec -it thesun_local_wordpress_1 chmod +x /usr/local/bin/docker-entrypoint.sh
 docker exec -it thesun_local_wordpress_1 chmod +x ./install-wp.sh
 docker exec -it thesun_local_wordpress_1 ./install-wp.sh
+
+docker-compose -f docker-compose.yml -f docker-compose.phpunit.yml up -d
+docker-compose -f docker-compose.phpunit.yml run --rm wordpress_phpunit ./install-wp-tests.sh wordpress_test root '' mysql_phpunit latest true
+docker-compose -f docker-compose.phpunit.yml run --rm wordpress_phpunit phpunit
 
 echo "Log in to http://${DOCKER_DEV_DOMAIN}/wp-admin/ with ${WP_ADMIN_USER} / ${WP_ADMIN_PASSWORD}."
 
