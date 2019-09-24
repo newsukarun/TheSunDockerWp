@@ -19,14 +19,15 @@ services:
       - "front"
       - "back"
     volumes:
+      - "./ssh:/var/www/html/.ssh:rw"
       - "wp:/var/www/html:rw"
       - "./bin/install-wp.sh:/var/www/html/install-wp.sh:rw"
+      - "./bin/install-wp-tests.sh:/var/www/html/install-wp-tests.sh:rw"
       - "./bin/.htaccess:/var/www/html/.htaccess:ro"
       - "./certs/ca-root/ca.crt:/tmp/certs/root.crt:ro"
       - "./conf/php-local.ini:/usr/local/etc/php/conf.d/local.ini:ro"
       - "./conf/wp-local-config.php:/usr/local/etc/php/autoprepend.php:ro"
       - "./src/nu-sun-web-wp-cms:/var/www/html/wp-content:rw"
-      - "./ssh:/.ssh:ro"
   wp-cli:
     image: "wordpress:cli-${WP_CLI_VERSION:-2.2.0}-php${PHP_VERSION:-7.3}"
     environment:
@@ -37,13 +38,13 @@ services:
     networks:
       - "back"
     volumes:
+      - "./ssh:/var/www/html/.ssh:rw"
       - "wp:/var/www/html:rw"
       - "./bin/.htaccess:/var/www/html/.htaccess:ro"
       - "./bin/install-wp.sh:/var/www/html/install-wp.sh:rw"
       - "./conf/php-local.ini:/usr/local/etc/php/conf.d/local.ini:ro"
       - "./conf/wp-local-config.php:/usr/local/etc/php/autoprepend.php:ro"
       - "./src/nu-sun-web-wp-cms:/var/www/html/wp-content:rw"
-      - "./ssh:/.ssh:ro"
   photon:
     image: "chriszarate/photon:latest"
     networks:

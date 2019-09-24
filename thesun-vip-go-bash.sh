@@ -6,13 +6,6 @@ CWD=$(pwd)
 UGD=~
 
 rm -rf thesun_local
-git clone https://github.com/chriszarate/docker-wordpress-vip-go.git thesun_local
-
-cd thesun_local
-
-rm -rf setup.sh
-
-rm -rf update.sh
 
 if [[ ! -f docker-compose.yml ]]; then
   echo "Please run this script from the root of the docker-vip repo."
@@ -22,8 +15,19 @@ fi
 if [[ ! -z "$(docker-compose ps | sed -e '/^\-\-\-/,$!d' -e '/^\-\-\-/d')" ]]; then
   echo "Running \`docker-compose down\` before running this script. (You will need"
   echo "to reimport content after this script completes.)"
+  docker stop $(docker ps -a -q)
+  docker rm $(docker ps -a -q)
+  docker network prune
   docker-compose down
 fi
+
+git clone https://github.com/chriszarate/docker-wordpress-vip-go.git thesun_local
+
+cd thesun_local
+
+rm -rf setup.sh
+
+rm -rf update.sh
 
 # Make sure environment is up to date.
 echo "Updating environment...."
@@ -34,8 +38,7 @@ mkdir -p src
 # Clone git repos.
 for repo in \
   newsuk/nu-sun-web-wp-cms \
-  tollmanz/wordpress-pecl-memcached-object-cache \
-  JulienBreux/phpunit-docker
+  tollmanz/wordpress-pecl-memcached-object-cache
 do
   dir_name="${repo##*/}"
 
@@ -84,6 +87,8 @@ echo -e "#!/usr/bin/env sh
 
 set -ex
 
+cp -R .ssh ~/.ssh
+
 apt-get update
 apt-get install sudo
 apt-get install vim
@@ -130,12 +135,11 @@ wp term create category Sport --description=Sport --allow-root
 wp term create category Football --description=Sport --allow-root
 
 # Network Enable theme
-wp theme enable thesun
-wp theme enable thesuncom
-wp theme enable scottishsun
-wp theme enable irishsun
-wp theme enable dreamteam
-wp theme enable talksport
+wp theme enable thesun --allow-root
+wp theme enable thescottishsun --allow-root
+wp theme enable theirishsun --allow-root
+wp theme enable dreamteam --allow-root
+wp theme enable talksport --allow-root
 
 # Network Create sites
 wp site create --slug=thesuncom --allow-root
@@ -146,17 +150,14 @@ wp site create --slug=talksport --allow-root
 
 # Enable theme site wide.
 wp theme activate thesun --allow-root --url=${DOCKER_DEV_DOMAIN}
-wp theme activate thesuncom --allow-root --url=${DOCKER_DEV_DOMAIN}/thesuncom
-wp theme activate scottishsun --allow-root --url=${DOCKER_DEV_DOMAIN}/scottishsun
-wp theme activate irishsun --allow-root --url=${DOCKER_DEV_DOMAIN}/irishsun
+wp theme activate thescottishsun --allow-root --url=${DOCKER_DEV_DOMAIN}/scottishsun
+wp theme activate theirishsun --allow-root --url=${DOCKER_DEV_DOMAIN}/irishsun
 wp theme activate dreamteam --allow-root --url=${DOCKER_DEV_DOMAIN}/dreamteam
 wp theme activate talksport --allow-root --url=${DOCKER_DEV_DOMAIN}/talksport
 
 cd wp-content/
 
 npm install
-grunt local
-grunt build
 
 git reset --hard
 git clean -df -f
@@ -174,16 +175,13 @@ echo "Done! You are ready to run \`docker-compose up -d\`."
 docker-compose up -d
 docker exec -it thesun_local_wordpress_1 chmod +x /usr/local/bin/docker-entrypoint.sh
 docker exec -it thesun_local_wordpress_1 chmod +x ./install-wp.sh
+docker exec -it thesun_local_wordpress_1 chmod +x ./install-wp-tests.sh
 docker exec -it thesun_local_wordpress_1 ./install-wp.sh
-
-docker-compose -f docker-compose.yml -f docker-compose.phpunit.yml up -d
-docker-compose -f docker-compose.phpunit.yml run --rm wordpress_phpunit ./install-wp-tests.sh wordpress_test root '' mysql_phpunit latest true
-docker-compose -f docker-compose.phpunit.yml run --rm wordpress_phpunit phpunit
+docker exec -it thesun_local_wordpress_1 ./install-wp-tests.sh wordpress_test root '' mysql latest true
 
 echo "Log in to http://${DOCKER_DEV_DOMAIN}/wp-admin/ with ${WP_ADMIN_USER} / ${WP_ADMIN_PASSWORD}."
 
 echo "Now Your ssh opens"
 
 docker exec -it thesun_local_wordpress_1 /bin/bash
-
 
